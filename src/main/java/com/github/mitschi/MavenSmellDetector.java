@@ -1,6 +1,9 @@
 package com.github.mitschi;
 
 import com.github.mitschi.common.MavenPom;
+import com.github.mitschi.smelldetectors.AbstractSmellDetector;
+import com.github.mitschi.smelldetectors.DuplicatedDependencyDetector;
+import com.github.mitschi.smells.MavenSmell;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -22,11 +25,21 @@ public class MavenSmellDetector {
     private Map<String, Model> pomModelMapFromFile;
     private MavenPom rootMavenPom;
 
+    private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector()});
+
     public List<MavenSmell> detectSmells(File projectRoot) {
         this.projectFolder=projectRoot;
         init();
+        List<MavenSmell> smells = detectRegisteredSmells(projectRoot);
+        return smells;
+    }
+
+    private List<MavenSmell> detectRegisteredSmells(File projectRoot) {
         List<MavenSmell> smells = new ArrayList<>();
-        //TODO detect smells
+        for (AbstractSmellDetector registeredSmellDetector : registeredSmellDetectors) {
+            registeredSmellDetector.setEnvironment(this.projectFolder,this.pomFiles,this.pomModelMapFromFile,this.rootMavenPom);
+            smells.addAll(registeredSmellDetector.detectSmells());
+        }
 
         return smells;
     }

@@ -1,5 +1,6 @@
 package com.github.mitschi;
 
+import com.github.mitschi.smells.MavenSmell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

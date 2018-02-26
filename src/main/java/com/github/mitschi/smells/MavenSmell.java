@@ -1,4 +1,4 @@
-package com.github.mitschi;
+package com.github.mitschi.smells;
 
 import java.io.File;
 
