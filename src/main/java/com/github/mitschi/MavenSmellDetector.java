@@ -70,7 +70,7 @@ public class MavenSmellDetector {
         executor.shutdown();
         while (!executor.isTerminated()) {
             try {
-                Thread.sleep(10000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {}
         }
 

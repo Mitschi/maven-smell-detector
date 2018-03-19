@@ -34,7 +34,7 @@ public  class PomModelWorker extends Thread{
             JAXBElement<Model> feed = unmarshaller.unmarshal(new StreamSource(new FileInputStream(pomFile)), Model.class);
             return feed.getValue();
         }catch(Exception e) { //currently we do nothing!
-//                e.printStackTrace();
+                e.printStackTrace();
         }
         return null;
     }
