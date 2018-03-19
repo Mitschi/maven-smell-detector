@@ -1,6 +1,7 @@
 package com.github.mitschi.smelldetectors;
 
 
+import com.github.mitschi.common.PomTree;
 import com.github.mitschi.smells.MavenSmell;
 import com.github.mitschi.smells.MavenSmellType;
 import com.github.mitschi.common.MavenPom;
@@ -16,14 +17,16 @@ public abstract class AbstractSmellDetector {
     protected Collection<File> pomFiles;
     protected Map<String, Model> pomModelMapFromFile;
     protected MavenPom rootMavenPom;
+    protected PomTree<Model> pomTree;
 
     protected MavenSmellType canDetect;
 
-    public void setEnvironment(File projectFolder, Collection<File> pomFiles, Map<String, Model> pomModelMapFromFile, MavenPom rootMavenPom) {
+    public void setEnvironment(File projectFolder, Collection<File> pomFiles, Map<String, Model> pomModelMapFromFile, MavenPom rootMavenPom, PomTree pomTree) {
         this.projectFolder = projectFolder;
         this.pomFiles = pomFiles;
         this.pomModelMapFromFile = pomModelMapFromFile;
         this.rootMavenPom = rootMavenPom;
+        this.pomTree = pomTree;
     }
 
     public abstract List<MavenSmell> detectSmells();

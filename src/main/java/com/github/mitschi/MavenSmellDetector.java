@@ -1,8 +1,10 @@
 package com.github.mitschi;
 
 import com.github.mitschi.common.MavenPom;
+import com.github.mitschi.common.PomTree;
 import com.github.mitschi.smelldetectors.AbstractSmellDetector;
 import com.github.mitschi.smelldetectors.DuplicatedDependencyDetector;
+import com.github.mitschi.smelldetectors.SnapshotDependencyDetector;
 import com.github.mitschi.smells.MavenSmell;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
@@ -24,8 +26,9 @@ public class MavenSmellDetector {
     private Collection<File> pomFiles;
     private Map<String, Model> pomModelMapFromFile;
     private MavenPom rootMavenPom;
+    private PomTree<Model> pomTree;
 
-    private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector()});
+    private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector(), new SnapshotDependencyDetector()});
 
     public List<MavenSmell> detectSmells(File projectRoot) {
         this.projectFolder=projectRoot;
@@ -37,7 +40,7 @@ public class MavenSmellDetector {
     private List<MavenSmell> detectRegisteredSmells(File projectRoot) {
         List<MavenSmell> smells = new ArrayList<>();
         for (AbstractSmellDetector registeredSmellDetector : registeredSmellDetectors) {
-            registeredSmellDetector.setEnvironment(this.projectFolder,this.pomFiles,this.pomModelMapFromFile,this.rootMavenPom);
+            registeredSmellDetector.setEnvironment(this.projectFolder,this.pomFiles,this.pomModelMapFromFile,this.rootMavenPom, this.pomTree);
             smells.addAll(registeredSmellDetector.detectSmells());
         }
 
@@ -49,6 +52,31 @@ public class MavenSmellDetector {
         LOG.info("Preprocessing "+this.pomFiles.size()+" POMs");
         createPomModelMapMultiThread(8);
         mapModulesWithFiles();
+
+        // ------------------------------------
+        // create pom-tree model
+        pomTree = new PomTree(rootMavenPom.getModel(), this.projectFolder + "/pom.xml");
+
+        // add all sub-poms to tree
+        Iterator it = this.pomModelMapFromFile.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+
+            Model m = (Model) entry.getValue();
+
+            PomTree.Node node = new PomTree.Node();
+            node.setData(m);
+            node.setFile(entry.getKey().toString());
+
+            pomTree.getRoot().addChild(node);
+
+        }
+
+
+        // set the correct parents for the children
+        // TODO
+        // ------------------------------------
+
         LOG.info("Finished preprocessing POMs");
     }
 
