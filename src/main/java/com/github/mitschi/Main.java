@@ -15,15 +15,6 @@ public class Main
 
     public static void main( String[] args )
     {
-
-//        PomTree tree = new PomTree<>("asdf");
-//
-//        PomTree.Node child1 = new PomTree.Node();
-//
-//        tree.getRoot().addChild(child1);
-//
-//        child1.addChild(new PomTree.Node().setData("test"););
-
         File projectRoot = new File(args[0]);
         MavenSmellDetector mavenSmellDetector = new MavenSmellDetector();
         List<MavenSmell> smells = mavenSmellDetector.detectSmells(projectRoot);

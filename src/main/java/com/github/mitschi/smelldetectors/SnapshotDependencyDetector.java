@@ -10,9 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class SnapshotDependencyDetector extends AbstractSmellDetector {
     public MavenSmellType canDetect = MavenSmellType.SNAPSHOT_DEPENDENCY;
@@ -21,6 +19,37 @@ public class SnapshotDependencyDetector extends AbstractSmellDetector {
 
     private static List<MavenSmell> smells;
 
+    /**
+     * recursive funktion, which checks, if the current node or any of his children
+     * contain a SNAPSHOT_DEPENDENCY-smell
+     * @param node the node, which will be checked (and his children)
+     */
+    private void checkSnapshotViolation(PomTree.Node<Model> node) {
+
+        // if the node has dependencies
+        if(node.getData().getDependencies() != null) {
+            // iterate over all defined dependencies
+            for(Dependency dependency : node.getData().getDependencies().getDependency()) {
+                // if the dependency is a SNAPSHOT-dependency, we found a smell
+                if(dependency.getVersion().contains("SNAPSHOT")) {
+                    smells.add(new MavenSmell(MavenSmellType.SNAPSHOT_DEPENDENCY, new File(this.pomTree.getRoot().getFile())));
+                }
+            }
+        }
+
+        // check all children of the node
+        if(node.getChildren() != null) {
+            for(PomTree.Node<Model> n : node.getChildren()) {
+                checkSnapshotViolation(n);
+            }
+        }
+
+    }
+
+    /**
+     * checks, if the project has any SNAPSHOT_DEPENDENCY-smells
+     * @return a list of found SNAPSHOT_DEPENDENCY-smells
+     */
     public List<MavenSmell> detectSmells() {
 
         smells = new ArrayList<>();
@@ -34,18 +63,8 @@ public class SnapshotDependencyDetector extends AbstractSmellDetector {
             return smells;
         }
 
-        // check for each dependency of the root
-        for(Dependency dependency : rootModel.getDependencies().getDependency()) {
-            if(dependency.getVersion().contains("SNAPSHOT")) {
-                smells.add(new MavenSmell(MavenSmellType.SNAPSHOT_DEPENDENCY, new File(this.pomTree.getRoot().getFile())));
-            }
-        }
-
-//        PomTree.Node<Model> node = this.pomTree.findNode(this.pomTree.getRoot(), null, "mavenrepoparser-client", null);
-
-//        System.out.println(node.getFile().toString());
-
-        // TODO: check children
+        // start the check
+        checkSnapshotViolation(this.pomTree.getRoot());
 
         return smells;
     }

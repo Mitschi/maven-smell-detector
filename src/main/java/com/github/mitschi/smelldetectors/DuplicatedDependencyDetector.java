@@ -1,5 +1,6 @@
 package com.github.mitschi.smelldetectors;
 
+import com.github.mitschi.common.PomTree;
 import com.github.mitschi.smells.MavenSmell;
 import com.github.mitschi.smells.MavenSmellType;
 import org.apache.maven.pom._4_0.Dependency;
@@ -15,94 +16,50 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
 
     private static final Logger LOG = LoggerFactory.getLogger(DuplicatedDependencyDetector.class);
 
-    private static List<Dependency> dependencyList;
-    private static List<MavenSmell> smells;
+    private List<MavenSmell> smells;
 
-    private void getDuplicateDependencies(Model model, String file) {
+    public void checkDuplicationViolation(PomTree.Node<Model> node, List<Dependency> parentDependencies) {
 
-        Model.Dependencies dependencies = model.getDependencies();
+        // 1. check if this node itself has duplicates
+        List<String> depList = new ArrayList<>();
 
-        List<String> depStrings = new ArrayList<>();
-
-        for(Dependency d : dependencies.getDependency()) {
-            // create a identification-string for each dependency
-            String s = d.getGroupId() + "." + d.getArtifactId();
-
-            // if this string is already in our depStrings-list, the dependency is a duplicate
-            if(depStrings.contains(s)) {
-                this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(file)));
+        if(parentDependencies.size() > 0) {
+            for(Dependency d : parentDependencies) {
+                depList.add(d.getGroupId() + "." + d.getArtifactId());
             }
-
-            depStrings.add(s);
-
-            // add to global dependency-list
-            dependencyList.add(d);
         }
 
+        // if the node has dependencies
+        if(node.getData().getDependencies() != null) {
+            for(Dependency d : node.getData().getDependencies().getDependency()) {
+                String depID = d.getGroupId() + "." + d.getArtifactId();
 
+                // duplicate found
+                if(depList.contains(depID)) {
+                    this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile())));
+                } else {
+                    depList.add(depID);
+                }
+            }
+        }
+
+        // 2. check if a child has the same dependency as this node
+        if(node.getChildren().size() > 0) {
+            if(node.getData().getDependencies() != null) {
+                parentDependencies.addAll(node.getData().getDependencies().getDependency());
+                for(PomTree.Node<Model> child : node.getChildren()) {
+                    checkDuplicationViolation(child, parentDependencies);
+                }
+            }
+        }
 
     }
 
     public List<MavenSmell> detectSmells() {
         smells = new ArrayList<>();
-        this.dependencyList = new ArrayList<>();
 
-        // start with the root-pom
-        Model rootModel = this.pomTree.getRoot().getData();
-
-        // add all dependencies to the global list for possible duplicates in the sub-pom
-        getDuplicateDependencies(rootModel, this.pomTree.getRoot().getFile());
-
-
-
-
-
-
-        // process other sub-poms
-
-
-
-//        // the list of duplicated dependencies
-//        List<Dependency> duplicateList = new ArrayList<>();
-//
-//
-//        Iterator it = this.pomModelMapFromFile.entrySet().iterator();
-//
-//        while (it.hasNext()) {
-//
-//            Map.Entry entry = (Map.Entry)it.next();
-//
-//            Model m = (Model)entry.getValue();
-//
-//            Model.Dependencies depList = m.getDependencies();
-//
-//            List<String> depStrings = new ArrayList<>();
-//
-//            // iterate over all dependencies
-//            for(Dependency dependency : depList.getDependency()) {
-//                // create a identification-string for each dependency
-//                String s = dependency.getGroupId() + "." + dependency.getArtifactId();
-//
-//                // if this string is already in our depStrings-list, the dependency is a duplicate
-//                if(depStrings.contains(s)) {
-//                    duplicateList.add(dependency);
-//                    smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(entry.getKey().toString())));
-//                }
-//
-//                depStrings.add(s);
-//            }
-//
-//
-//            LOG.info("found " + duplicateList.size() + " duplicates");
-//
-////            int i = 1;
-////            for(Dependency d : duplicateList) {
-////                Log.info("#" + i++);
-////                LOG.info("gID: " + d.getGroupId());
-////                LOG.info("aID: " + d.getArtifactId());
-////            }
-//
-//        }
+        // start the detection
+        checkDuplicationViolation(this.pomTree.getRoot(), new ArrayList<>());
 
         return smells;
     }

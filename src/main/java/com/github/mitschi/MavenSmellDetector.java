@@ -112,7 +112,7 @@ public class MavenSmellDetector {
             }
         }
 
-        this.pomTree.printTree(this.pomTree.getRoot());
+//        this.pomTree.printTree(this.pomTree.getRoot());
 
 
         // ------------------------------------
