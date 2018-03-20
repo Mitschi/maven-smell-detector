@@ -1,5 +1,6 @@
 package com.github.mitschi.smelldetectors;
 
+import com.github.mitschi.common.PomTree;
 import com.github.mitschi.smells.MavenSmell;
 import com.github.mitschi.smells.MavenSmellType;
 import org.apache.maven.pom._4_0.Dependency;
@@ -21,6 +22,7 @@ public class SnapshotDependencyDetector extends AbstractSmellDetector {
     private static List<MavenSmell> smells;
 
     public List<MavenSmell> detectSmells() {
+
         smells = new ArrayList<>();
 
         // start with the root-pom
@@ -38,6 +40,10 @@ public class SnapshotDependencyDetector extends AbstractSmellDetector {
                 smells.add(new MavenSmell(MavenSmellType.SNAPSHOT_DEPENDENCY, new File(this.pomTree.getRoot().getFile())));
             }
         }
+
+//        PomTree.Node<Model> node = this.pomTree.findNode(this.pomTree.getRoot(), null, "mavenrepoparser-client", null);
+
+//        System.out.println(node.getFile().toString());
 
         // TODO: check children
 

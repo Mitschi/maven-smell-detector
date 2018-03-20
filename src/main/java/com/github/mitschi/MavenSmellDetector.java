@@ -64,10 +64,16 @@ public class MavenSmellDetector {
 
             Model m = (Model) entry.getValue();
 
+            // skip root node
+            if(m.equals(rootMavenPom.getModel())) {
+                continue;
+            }
+
             PomTree.Node node = new PomTree.Node();
             node.setData(m);
             node.setFile(entry.getKey().toString());
 
+            node.setParent(pomTree.getRoot());
             pomTree.getRoot().addChild(node);
 
         }
@@ -75,6 +81,40 @@ public class MavenSmellDetector {
 
         // set the correct parents for the children
         // TODO
+
+        List<PomTree.Node<Model>> copyOfChildren = new ArrayList<>();
+
+        copyOfChildren.addAll(pomTree.getRoot().getChildren());
+
+        for(PomTree.Node<Model> n : copyOfChildren) {
+//            System.out.println(n.getFile());
+            String parentGID = n.getData().getParent().getGroupId(); // the defined parent groupID in the pom.xml
+            String parentAID = n.getData().getParent().getArtifactId(); // the defined parent artifactID in the pom.xml
+            String parentVersion = n.getData().getParent().getVersion(); // the defined parent version in the pom.xml
+
+            // if the parent-node in the tree does not match the defined parent in the pom.xml
+            if(!n.getParent().getData().getGroupId().equals(parentGID) ||
+                    !n.getParent().getData().getArtifactId().equals(parentAID) ||
+                    !n.getParent().getData().getVersion().equals(parentVersion)) {
+
+                // find the new parent, starting from the root
+                PomTree.Node<Model> newParent = this.pomTree.findNode(this.pomTree.getRoot(), parentGID, parentAID, parentVersion);
+
+                // found the new parent
+                if(newParent != null) {
+                    // remove the child-node from the old parent
+                    n.getParent().removeChild(n);
+                    // set the new parent
+                    n.setParent(newParent);
+                    // set the node as a childnode of the new parent
+                    newParent.addChild(n);
+                }
+            }
+        }
+
+        this.pomTree.printTree(this.pomTree.getRoot());
+
+
         // ------------------------------------
 
         LOG.info("Finished preprocessing POMs");
