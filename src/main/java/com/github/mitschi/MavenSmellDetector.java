@@ -4,6 +4,7 @@ import com.github.mitschi.common.MavenPom;
 import com.github.mitschi.common.PomTree;
 import com.github.mitschi.smelldetectors.AbstractSmellDetector;
 import com.github.mitschi.smelldetectors.DuplicatedDependencyDetector;
+import com.github.mitschi.smelldetectors.OffendingVersionsDetector;
 import com.github.mitschi.smelldetectors.SnapshotDependencyDetector;
 import com.github.mitschi.smells.MavenSmell;
 import org.apache.commons.io.FileUtils;
@@ -28,7 +29,7 @@ public class MavenSmellDetector {
     private MavenPom rootMavenPom;
     private PomTree<Model> pomTree;
 
-    private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector(), new SnapshotDependencyDetector()});
+    private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector(), new SnapshotDependencyDetector(), new OffendingVersionsDetector()});
 
     public List<MavenSmell> detectSmells(File projectRoot) {
         this.projectFolder=projectRoot;
@@ -79,15 +80,15 @@ public class MavenSmellDetector {
         }
 
 
-        // set the correct parents for the children
-        // TODO
+
+//        this.pomTree.printTree(this.pomTree.getRoot());
 
         List<PomTree.Node<Model>> copyOfChildren = new ArrayList<>();
 
         copyOfChildren.addAll(pomTree.getRoot().getChildren());
 
         for(PomTree.Node<Model> n : copyOfChildren) {
-//            System.out.println(n.getFile());
+
             String parentGID = n.getData().getParent().getGroupId(); // the defined parent groupID in the pom.xml
             String parentAID = n.getData().getParent().getArtifactId(); // the defined parent artifactID in the pom.xml
             String parentVersion = n.getData().getParent().getVersion(); // the defined parent version in the pom.xml

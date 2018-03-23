@@ -23,6 +23,7 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
         // 1. check if this node itself has duplicates
         List<String> depList = new ArrayList<>();
 
+        // root-node
         if(parentDependencies.size() > 0) {
             for(Dependency d : parentDependencies) {
                 depList.add(d.getGroupId() + "." + d.getArtifactId());
@@ -36,6 +37,7 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
 
                 // duplicate found
                 if(depList.contains(depID)) {
+
                     this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile())));
                 } else {
                     depList.add(depID);
@@ -47,10 +49,12 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
         if(node.getChildren().size() > 0) {
             if(node.getData().getDependencies() != null) {
                 parentDependencies.addAll(node.getData().getDependencies().getDependency());
-                for(PomTree.Node<Model> child : node.getChildren()) {
-                    checkDuplicationViolation(child, parentDependencies);
-                }
             }
+
+            for(PomTree.Node<Model> child : node.getChildren()) {
+                checkDuplicationViolation(child, parentDependencies);
+            }
+
         }
 
     }

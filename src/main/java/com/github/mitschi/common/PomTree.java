@@ -30,6 +30,10 @@ public class PomTree<T> {
         if(startNode.getChildren() != null) {
             for (Node<T> n : startNode.getChildren()) {
 
+                if(depth > 0) {
+                    System.out.print(" │");
+                }
+
                 for(int i = 0; i < depth; i++) {
                     System.out.print("   ");
                 }

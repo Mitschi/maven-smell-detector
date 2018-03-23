@@ -1,7 +1,5 @@
 package com.github.mitschi.smells;
 
-// TODO: smelltype for duplicate in parent?
-
 public enum MavenSmellType {
     DUPLICATED_DEPENDENCY,      //    S-D-1	Duplicated Dependency	A dependency is declared multiple times in a pom (or in a child of a parent pom)
     UNUSED_DEPENDENCY,          //    S-D-2	Unused Dependency	A dependency that is not use in the code
