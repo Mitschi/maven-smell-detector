@@ -111,6 +111,10 @@
           <artifactId>jaxb-impl</artifactId>
           <version>2.2.11</version>
       </dependency>
-
+      <dependency>
+          <groupId>org.eclipse.jgit</groupId>
+          <artifactId>org.eclipse.jgit</artifactId>
+          <version>3.7.1.201504261725-r</version>
+      </dependency>
   </dependencies>
 </project>
