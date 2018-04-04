@@ -352,4 +352,8 @@ public class Dependency {
 
     }
 
+    @Override
+    public String toString() {
+        return this.getGroupId() + ":" + this.getArtifactId() + ":" + this.getVersion();
+    }
 }

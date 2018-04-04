@@ -5,11 +5,20 @@ import java.io.File;
 public class MavenSmell {
     private MavenSmellType mavenSmellType;
     private File location;
+    private Object violator;
+    private File violatesWith; //TODO
 
     public MavenSmell(){}
+
     public MavenSmell(MavenSmellType mavenSmellType, File location) {
         this.mavenSmellType = mavenSmellType;
         this.location = location;
+    }
+
+    public MavenSmell(MavenSmellType mavenSmellType, File location, Object violator) {
+        this.mavenSmellType = mavenSmellType;
+        this.location = location;
+        this.violator = violator;
     }
 
     public MavenSmellType getMavenSmellType() {
@@ -22,10 +31,11 @@ public class MavenSmell {
 
     @Override
     public String toString() {
-        return "MavenSmell{" +
-                "mavenSmellType=" + mavenSmellType +
-                ", location=" + location +
-                '}';
+        return "\nMavenSmell {" +
+                "\n\tmavenSmellType = " + mavenSmellType +
+                ",\n\tlocation = " + location +
+                ",\n\tviolator = " + violator.toString() +
+                "\n}\n";
     }
 
     @Override
@@ -36,7 +46,10 @@ public class MavenSmell {
         MavenSmell that = (MavenSmell) o;
 
         if (mavenSmellType != that.mavenSmellType) return false;
-        return location != null ? location.equals(that.location) : that.location == null;
+        if (!location.equals(that.location)) return false;
+        if (violator != that.violator) return false;
+
+        return true;
     }
 
     @Override

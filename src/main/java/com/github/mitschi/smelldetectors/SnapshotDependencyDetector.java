@@ -32,7 +32,7 @@ public class SnapshotDependencyDetector extends AbstractSmellDetector {
             for(Dependency dependency : node.getData().getDependencies().getDependency()) {
                 // if the dependency is a SNAPSHOT-dependency, we found a smell
                 if(dependency.getVersion().contains("SNAPSHOT")) {
-                    smells.add(new MavenSmell(MavenSmellType.SNAPSHOT_DEPENDENCY, new File(this.pomTree.getRoot().getFile())));
+                    smells.add(new MavenSmell(MavenSmellType.SNAPSHOT_DEPENDENCY, new File(this.pomTree.getRoot().getFile()), dependency));
                 }
             }
         }
