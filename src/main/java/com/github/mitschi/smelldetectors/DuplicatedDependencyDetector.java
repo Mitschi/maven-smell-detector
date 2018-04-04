@@ -39,11 +39,6 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
 
                 // duplicate found
                 if(depList.contains(depID)) {
-
-                    System.out.println(depID);
-                    System.out.println(node.getFile());
-                    System.out.println();
-
                     this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile()), d));
                 } else {
                     depList.add(depID);

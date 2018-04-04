@@ -26,79 +26,12 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
     private Map<String, List<Dependency>> dependencyToFileMap;
     private List<Dependency> totalDependencies;
 
-    private String findVersionByProperty(PomTree.Node<Model> node, String property) {
-
-        // Project Model Variables
-        if(property.equals("${project.version}")) {
-            if(node.getData().getVersion() != null) {
-                return node.getData().getVersion();
-            } else {
-                if(node.getParent() != null) {
-                    findVersionByProperty(node.getParent(), property);
-                }
-            }
-        }
-
-        // if the current node has properties defined
-        if(node.getData().getProperties() != null) {
-
-            // iterate over all defined properties in this node
-            for (int i = 0; i < node.getData().getProperties().getAny().size(); i++) {
-
-                Element e = node.getData().getProperties().getAny().get(i);
-
-                // if the property matches the defined placeholder
-                if(e.getLocalName().equals(property.replaceAll("[${}]*",""))) {
-                    return e.getFirstChild().getTextContent();
-                }
-
-            }
-
-
-        }
-
-        // if the current node has dependency-management
-        if(node.getData().getDependencyManagement() != null) {
-            DependencyManagement dpm = node.getData().getDependencyManagement();
-
-            for(Dependency d : dpm.getDependencies().getDependency()) {
-
-            }
-
-        }
-
-        if(node.getParent() != null) {
-            return findVersionByProperty(node.getParent(), property);
-        }
-
-        return "NOT FOUND";
-    }
-
     private void getAllDependencies(PomTree.Node<Model> node) {
 
         // if the node has dependencies
         if(node.getData().getDependencies() != null) {
 
             for(Dependency d : node.getData().getDependencies().getDependency()) {
-
-                // check if version is a property-defined version
-                if(d.getVersion()!= null && d.getVersion().startsWith("$")) {
-
-//                    System.out.println(node.getFile());
-
-//                    System.out.println("before: " + d.getVersion());
-
-                    String realVersion = findVersionByProperty(node, d.getVersion());
-
-//                    System.out.println("found: " + realVersion);
-
-                    d.setVersion(realVersion);
-
-//                    System.out.println("after: " + d.getVersion());
-
-//                    System.out.println("---");
-                }
-
 
                 if(!totalDependencies.contains(d)) {
                     totalDependencies.add(d);
@@ -131,12 +64,10 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
                             totalDep.getArtifactId().equals(dep.getArtifactId())) {
 
                         if(totalDep.getVersion() != null && dep.getVersion() != null && !totalDep.getVersion().equals(dep.getVersion())) {
-
-//                            System.out.println();
+//                            System.out.println(file);
 //                            System.out.println(totalDep.toString());
 //                            System.out.println(dep.toString());
-//                            System.out.println();
-
+//                            System.out.println("---");
                             smells.add(new MavenSmell(MavenSmellType.OFFENDING_VERSIONS, new File(file), dep));
                         }
                     }

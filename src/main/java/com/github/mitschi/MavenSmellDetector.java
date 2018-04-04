@@ -10,6 +10,8 @@ import com.github.mitschi.smells.MavenSmell;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.maven.pom._4_0.Dependency;
+import org.apache.maven.pom._4_0.DependencyManagement;
 import org.apache.maven.pom._4_0.Model;
 
 import java.io.File;
@@ -18,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 public class MavenSmellDetector {
 
@@ -116,12 +119,124 @@ public class MavenSmellDetector {
 
         }
 
+        // fill in data for the root
+        fillIncompleteData(pomTree.getRoot());
+
+        for(PomTree.Node<Model> node : pomTree.getRoot().getChildren()) {
+            // fill in data for all children
+            fillIncompleteData(node);
+        }
+
 //        this.pomTree.printTree(this.pomTree.getRoot());
 
 
         // ------------------------------------
 
         LOG.info("Finished preprocessing POMs");
+    }
+
+    private void fillIncompleteData(PomTree.Node<Model> node) {
+
+        // set correct version-numbers
+
+        if(node.getData().getDependencies() != null) {
+            for (Dependency dep : node.getData().getDependencies().getDependency()) {
+
+                // check if version is a property-defined version
+                if(dep.getVersion()!= null && dep.getVersion().startsWith("$")) {
+                    String realVersion = findVersionByProperty(node, dep.getVersion());
+                    dep.setVersion(realVersion);
+                }
+
+                if(dep.getVersion() == null) {
+                    String versionNumber = findVersionNumber(node);
+                    dep.setVersion(versionNumber);
+                }
+
+                if(dep.getGroupId().startsWith("$")) {
+                    String groupID = getProjectGroupID(node);
+                    dep.setGroupId(groupID);
+                }
+
+
+
+            }
+        }
+
+        if (node.getChildren().size() > 0) {
+            for(PomTree.Node<Model> n : node.getChildren()) {
+                fillIncompleteData(n);
+            }
+        }
+
+    }
+
+    private String findVersionNumber(PomTree.Node<Model> node) {
+
+
+        // if the current node has dependency-management
+        // TODO
+        if(node.getData().getDependencyManagement() != null) {
+            DependencyManagement dpm = node.getData().getDependencyManagement();
+
+            for(Dependency d : dpm.getDependencies().getDependency()) {
+
+            }
+
+        }
+
+        return null;
+    }
+
+    private String getProjectGroupID(PomTree.Node<Model> node) {
+
+        if(node.getData().getGroupId() != null) {
+            return node.getData().getGroupId();
+        } else {
+            if(node.getParent() != null) {
+                return node.getData().getParent().getGroupId();
+            } else {
+                return "NOT FOUND";
+            }
+        }
+    }
+
+    private String findVersionByProperty(PomTree.Node<Model> node, String property) {
+
+        // Project Model Variables
+        if(property.equals("${project.version}")) {
+            if(node.getData().getVersion() != null) {
+                return node.getData().getVersion();
+            } else {
+                if(node.getParent() != null) {
+                    findVersionByProperty(node.getParent(), property);
+                }
+            }
+        }
+
+        // if the current node has properties defined
+        if(node.getData().getProperties() != null) {
+
+            // iterate over all defined properties in this node
+            for (int i = 0; i < node.getData().getProperties().getAny().size(); i++) {
+
+                Element e = node.getData().getProperties().getAny().get(i);
+
+                // if the property matches the defined placeholder
+                if(e.getLocalName().equals(property.replaceAll("[${}]*",""))) {
+                    return e.getFirstChild().getTextContent();
+                }
+
+            }
+
+
+        }
+
+        if(node.getParent() != null) {
+            return findVersionByProperty(node.getParent(), property);
+        }
+
+        return "NOT FOUND";
     }
 
     protected void createPomModelMapMultiThread(int numThreads) {
