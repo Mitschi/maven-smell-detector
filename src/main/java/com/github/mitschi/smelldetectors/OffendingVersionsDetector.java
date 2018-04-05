@@ -24,19 +24,19 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
     private List<MavenSmell> smells;
 
     private Map<String, List<Dependency>> dependencyToFileMap;
-    private List<Dependency> totalDependencies;
+//    private List<Dependency> totalDependencies;
 
     private void getAllDependencies(PomTree.Node<Model> node) {
 
         // if the node has dependencies
         if(node.getData().getDependencies() != null) {
 
-            for(Dependency d : node.getData().getDependencies().getDependency()) {
-
-                if(!totalDependencies.contains(d)) {
-                    totalDependencies.add(d);
-                }
-            }
+//            for(Dependency d : node.getData().getDependencies().getDependency()) {
+//
+//                if(!totalDependencies.contains(d)) {
+//                    totalDependencies.add(d);
+//                }
+//            }
 
             dependencyToFileMap.put(node.getFile(), node.getData().getDependencies().getDependency());
 
@@ -58,21 +58,48 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
             String file = entry.getKey();             // current pom filepath
             List<Dependency> deps = entry.getValue(); // dependencies of the current pom
 
-            for (Dependency dep : deps) {
-                for (Dependency totalDep : totalDependencies) {
-                    if(totalDep.getGroupId().equals(dep.getGroupId()) &&
-                            totalDep.getArtifactId().equals(dep.getArtifactId())) {
 
-                        if(totalDep.getVersion() != null && dep.getVersion() != null && !totalDep.getVersion().equals(dep.getVersion())) {
-//                            System.out.println(file);
-//                            System.out.println(totalDep.toString());
-//                            System.out.println(dep.toString());
-//                            System.out.println("---");
-                            smells.add(new MavenSmell(MavenSmellType.OFFENDING_VERSIONS, new File(file), dep));
+            for (Map.Entry<String, List<Dependency>> pomToCheck : dependencyToFileMap.entrySet()) {
+                // don't check the pom with itself
+                if(!pomToCheck.equals(entry)) {
+
+                    String fileOfSecondPom = pomToCheck.getKey();  // filepath of the second pom
+                    List<Dependency> depsOfSecondPom = pomToCheck.getValue(); // dependencies of the second pom
+
+                    for (Dependency dep : deps) {
+                        for (Dependency dep2 : depsOfSecondPom) {
+
+                            if(dep2.getGroupId().equals(dep.getGroupId()) &&
+                                    dep2.getArtifactId().equals(dep.getArtifactId())) {
+
+                                if(dep2.getVersion() != null && dep.getVersion() != null && !dep2.getVersion().equals(dep.getVersion())) {
+
+                                    // TODO: if X violates with Y already, dont add Y<->X
+                                    smells.add(new MavenSmell(MavenSmellType.OFFENDING_VERSIONS, new File(file), dep, new File(fileOfSecondPom), dep2));
+                                }
+                            }
+
                         }
                     }
                 }
             }
+
+// --- old code, which does not note, which file violates with which other file
+//            for (Dependency dep : deps) {
+//                for (Dependency totalDep : totalDependencies) {
+//                    if(totalDep.getGroupId().equals(dep.getGroupId()) &&
+//                            totalDep.getArtifactId().equals(dep.getArtifactId())) {
+//
+//                        if(totalDep.getVersion() != null && dep.getVersion() != null && !totalDep.getVersion().equals(dep.getVersion())) {
+////                            System.out.println(file);
+////                            System.out.println(totalDep.toString());
+////                            System.out.println(dep.toString());
+////                            System.out.println("---");
+//                            smells.add(new MavenSmell(MavenSmellType.OFFENDING_VERSIONS, new File(file), dep));
+//                        }
+//                    }
+//                }
+//            }
         }
 
     }
@@ -80,7 +107,7 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
     public List<MavenSmell> detectSmells() {
         smells = new ArrayList<>();
 
-        totalDependencies = new ArrayList<>();
+//        totalDependencies = new ArrayList<>();
         dependencyToFileMap = new HashMap<>();
 
         // get all total dependencies of the project

@@ -18,44 +18,75 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
 
     private List<MavenSmell> smells;
 
-    public void checkDuplicationViolation(PomTree.Node<Model> node, List<Dependency> parentDependencies) {
+    public void checkDuplicationViolation(PomTree.Node<Model> node, HashMap<String, List<Dependency>> parentDependencies) {
+
+        // start at the root:
 
         // 1. check if this node itself has duplicates
-        List<String> depList = new ArrayList<>();
+        List<Dependency> depList = new ArrayList<>();
 
-        // root-node
-        if(parentDependencies.size() > 0) {
-            for(Dependency d : parentDependencies) {
-                depList.add(d.getGroupId() + "." + d.getArtifactId());
-            }
-        }
-
-        // if the node has dependencies
+        // if it has dependencies defined
         if(node.getData().getDependencies() != null) {
+            // iterate over them
             for(Dependency d : node.getData().getDependencies().getDependency()) {
-                String depID = d.getGroupId() + ":" + d.getArtifactId();
 
+                boolean alreadyInList = false;
 
+                // iterate over all previously checked dependencies
+                for(Dependency dep : depList) {
+                    // if anyone is a duplicate, add the smell
+                    if(dep.getGroupId().equals(d.getGroupId()) &&
+                            dep.getArtifactId().equals(d.getArtifactId()) &&
+                            !dep.equals(d)) {
+                        this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile()), d, new File(node.getFile()), dep));
+                        alreadyInList = true;
+                    }
+                }
 
-                // duplicate found
-                if(depList.contains(depID)) {
-                    this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile()), d));
-                } else {
-                    depList.add(depID);
+                // if the dependency is not in the list, add it
+                if(!alreadyInList) {
+                    depList.add(d);
                 }
             }
         }
 
-        // 2. check if a child has the same dependency as this node
+        // 2. check, if there is a duplication in any of his parents
+        if(parentDependencies.size() > 0) {
+            // for every parent
+            for (Map.Entry<String, List<Dependency>> parent : parentDependencies.entrySet()) {
+
+                String filePath = parent.getKey();
+
+                List<Dependency> depsOfParent = parent.getValue();
+
+                for(Dependency d : depsOfParent) {
+
+                    if(depList.contains(d)) {
+                        this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile()), d, new File(filePath), d));
+                    }
+
+//                    for(Dependency dep : depList) {
+//                        if(dep.getGroupId().equals(d.getGroupId()) &&
+//                                dep.getArtifactId().equals(d.getArtifactId())) {
+//                            this.smells.add(new MavenSmell(MavenSmellType.DUPLICATED_DEPENDENCY, new File(node.getFile()), dep, new File(filePath), d));
+//                        }
+//                    }
+                }
+            }
+        }
+
+        HashMap<String, List<Dependency>> newParentDependencies = (HashMap)parentDependencies.clone();
+
+        // add all dependencies of the node to the parent-dependency-map
+        if(node.getData().getDependencies() != null) {
+            newParentDependencies.put(node.getFile(), node.getData().getDependencies().getDependency());
+        }
+
+        // 3. check if a child has the same dependency as this node
         if(node.getChildren().size() > 0) {
-            if(node.getData().getDependencies() != null) {
-                parentDependencies.addAll(node.getData().getDependencies().getDependency());
-            }
-
             for(PomTree.Node<Model> child : node.getChildren()) {
-                checkDuplicationViolation(child, parentDependencies);
+                checkDuplicationViolation(child, newParentDependencies);
             }
-
         }
 
     }
@@ -64,7 +95,7 @@ public class DuplicatedDependencyDetector extends AbstractSmellDetector {
         smells = new ArrayList<>();
 
         // start the detection
-        checkDuplicationViolation(this.pomTree.getRoot(), new ArrayList<>());
+        checkDuplicationViolation(this.pomTree.getRoot(), new HashMap<>());
 
         return smells;
     }

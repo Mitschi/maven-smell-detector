@@ -6,7 +6,8 @@ public class MavenSmell {
     private MavenSmellType mavenSmellType;
     private File location;
     private Object violator;
-    private File violatesWith; //TODO
+    private File violatesWithFile;
+    private Object violatesWithObject;
 
     public MavenSmell(){}
 
@@ -21,6 +22,14 @@ public class MavenSmell {
         this.violator = violator;
     }
 
+    public MavenSmell(MavenSmellType mavenSmellType, File location, Object violator, File violatesWith, Object violatesWithObject) {
+        this.mavenSmellType = mavenSmellType;
+        this.location = location;
+        this.violator = violator;
+        this.violatesWithFile = violatesWith;
+        this.violatesWithObject = violatesWithObject;
+    }
+
     public MavenSmellType getMavenSmellType() {
         return mavenSmellType;
     }
@@ -31,11 +40,16 @@ public class MavenSmell {
 
     @Override
     public String toString() {
-        return "\nMavenSmell {" +
-                "\n\tmavenSmellType = " + mavenSmellType +
-                ",\n\tlocation = " + location +
-                ",\n\tviolator = " + violator.toString() +
-                "\n}\n";
+
+        String toPrint = "\r\n\tMavenSmell {";
+
+        if(mavenSmellType != null) toPrint += String.format("\n\t\t %-20s = %s", "mavenSmellType", mavenSmellType);
+        if(location != null) toPrint += String.format("\n\t\t %-20s = %s", "location", location);
+        if(violator != null) toPrint += String.format("\n\t\t %-20s = %s", "violator", violator.toString());
+        if(violatesWithFile != null) toPrint += String.format("\n\t\t %-20s = %s", "violatesWithFile", violatesWithFile.toString());
+        if(violatesWithObject != null) toPrint += String.format("\n\t\t %-20s = %s", "violatesWithObject", violatesWithObject.toString());
+
+        return toPrint + "\n\t}\n";
     }
 
     @Override

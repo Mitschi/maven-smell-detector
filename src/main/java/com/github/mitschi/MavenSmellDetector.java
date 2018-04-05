@@ -35,7 +35,7 @@ public class MavenSmellDetector {
     private List<AbstractSmellDetector> registeredSmellDetectors = Arrays.asList(new AbstractSmellDetector[]{new DuplicatedDependencyDetector(), new SnapshotDependencyDetector(), new OffendingVersionsDetector()});
 
     public List<MavenSmell> detectSmells(File projectRoot) {
-        this.projectFolder=projectRoot;
+        this.projectFolder = projectRoot;
         init();
         List<MavenSmell> smells = detectRegisteredSmells(projectRoot);
         return smells;
@@ -257,7 +257,7 @@ public class MavenSmellDetector {
         executor.shutdown();
         while (!executor.isTerminated()) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
             } catch (InterruptedException e) {}
         }
 
