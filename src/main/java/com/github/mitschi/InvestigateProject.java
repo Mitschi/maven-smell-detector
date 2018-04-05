@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InvestigateProject {
     public static void main(String[] args) throws Exception{
@@ -44,7 +45,7 @@ public class InvestigateProject {
                 List<MavenSmell> smells = mavenSmellDetector.detectSmells(projectFolder);
 
                 ps.print(rev.getName()+"  -->  "+formatDate(rev.getCommitterIdent().getWhen())+"; Smells: ");
-                ps.println(smells);
+                ps.println(smells.parallelStream().map(x -> x.getMavenSmellType()).collect(Collectors.toList()));
             }catch (Exception e) {
                 System.out.print("error in "+rev.getName()+":   ");
                 System.out.println(e.getMessage());
