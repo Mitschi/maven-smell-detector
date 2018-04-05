@@ -38,6 +38,10 @@ public class MavenSmell {
         this.mavenSmellType = mavenSmellType;
     }
 
+    public MavenSmell mirror() {
+        return new MavenSmell(this.mavenSmellType, this.violatesWithFile, this.violatesWithObject, this.location, this.violator);
+    }
+
     @Override
     public String toString() {
 
@@ -62,6 +66,8 @@ public class MavenSmell {
         if (mavenSmellType != that.mavenSmellType) return false;
         if (!location.equals(that.location)) return false;
         if (violator != that.violator) return false;
+        if (!violatesWithFile.equals(that.violatesWithFile)) return false;
+        if (!violatesWithObject.equals(that.violatesWithObject)) return false;
 
         return true;
     }
