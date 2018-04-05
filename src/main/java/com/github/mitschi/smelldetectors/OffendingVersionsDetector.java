@@ -74,8 +74,6 @@ public class OffendingVersionsDetector extends AbstractSmellDetector {
 
                                 if(dep2.getVersion() != null && dep.getVersion() != null && !dep2.getVersion().equals(dep.getVersion())) {
 
-                                    // TODO: if X violates with Y already, dont add Y<->X
-
                                     MavenSmell smell = new MavenSmell(MavenSmellType.OFFENDING_VERSIONS, new File(file), dep, new File(fileOfSecondPom), dep2);
 
                                     if(!smells.contains(smell) &&

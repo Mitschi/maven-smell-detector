@@ -142,20 +142,19 @@ public class MavenSmellDetector {
         if(node.getData().getDependencies() != null) {
             for (Dependency dep : node.getData().getDependencies().getDependency()) {
 
-                // check if version is a property-defined version
-                if(dep.getVersion()!= null && dep.getVersion().startsWith("$")) {
-                    String realVersion = findVersionByProperty(node, dep.getVersion());
-                    dep.setVersion(realVersion);
-                }
-
                 if(dep.getVersion() == null) {
-                    String versionNumber = findVersionNumber(node);
-                    dep.setVersion(versionNumber);
+                    findVersionNumber(node, dep);
                 }
 
                 if(dep.getGroupId().startsWith("$")) {
                     String groupID = getProjectGroupID(node);
                     dep.setGroupId(groupID);
+                }
+
+                // check if version is a property-defined version
+                if(dep.getVersion()!= null && dep.getVersion().startsWith("$")) {
+                    String realVersion = findVersionByProperty(node, dep.getVersion());
+                    dep.setVersion(realVersion);
                 }
 
 
@@ -171,21 +170,26 @@ public class MavenSmellDetector {
 
     }
 
-    private String findVersionNumber(PomTree.Node<Model> node) {
+    private void findVersionNumber(PomTree.Node<Model> node, Dependency dependency) {
 
 
         // if the current node has dependency-management
-        // TODO
         if(node.getData().getDependencyManagement() != null) {
             DependencyManagement dpm = node.getData().getDependencyManagement();
 
             for(Dependency d : dpm.getDependencies().getDependency()) {
-
+                if(d.getGroupId().equals(dependency.getGroupId()) &&
+                        d.getArtifactId().equals(dependency.getArtifactId()) &&
+                        d.getVersion() != null) {
+                    dependency.setVersion(d.getVersion());
+                }
             }
 
         }
 
-        return null;
+        if(node.getParent() != null) {
+            findVersionNumber(node.getParent(), dependency);
+        }
     }
 
     private String getProjectGroupID(PomTree.Node<Model> node) {
